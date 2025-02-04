@@ -1,0 +1,2 @@
+build --spawn_strategy=local
+common --enable_bzlmod
