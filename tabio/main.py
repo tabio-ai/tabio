@@ -1,9 +1,11 @@
+import os
+
 from tkinter import filedialog, ttk
 import pandas as pd
 import tkinter as tk
 
 
-class CSVViewerApp:
+class CSVViewerApp(object):
     def __init__(self, root):
         self.root = root
         self.root.title("CSV Viewer")
@@ -28,9 +30,12 @@ class CSVViewerApp:
         self.v_scroll.pack(side="right", fill="y")
         self.h_scroll.pack(side="bottom", fill="x")
 
-    def load_csv(self):
-        file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
-        if not file_path:
+        # TODO(x): Remove before release.
+        self.load_csv('/home/data/work/test.csv')
+
+    def load_csv(self, file_path=None):
+        file_path = file_path or filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
+        if file_path is None or not os.path.exists(file_path):
             return
 
         # Read CSV
