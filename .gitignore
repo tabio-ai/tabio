@@ -1,4 +1,5 @@
 bazel-*
+main.*
 MODULE.bazel.lock
 
 # Byte-compiled / optimized / DLL files
