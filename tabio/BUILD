@@ -8,6 +8,7 @@ py_binary(
     srcs = ["main.py"],
     deps = [
         requirement("absl-py"),
+        requirement("matplotlib"),
         requirement("pandas"),
         requirement("tk"),
     ],
