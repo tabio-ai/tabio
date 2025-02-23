@@ -6,6 +6,10 @@ import pandas as pd
 import tkinter as tk
 
 
+CHECK_ON = '☑'
+CHECK_OFF = '☐'
+
+
 class TabioApp(object):
     def __init__(self):
         self.df = None
@@ -61,11 +65,18 @@ class TabioApp(object):
         self.tree.delete(*self.tree.get_children())
         self.tree["columns"] = list(self.df.columns)
         for col in self.df.columns:
-            self.tree.heading(col, text=col)
+            self.tree.heading(col, text=col + CHECK_OFF, command=lambda _col=col: self.toggle_column(_col))
             self.tree.column(col, anchor="center", width=100, stretch=False)
+
         for i, row in self.df.iterrows():
+            if type(i) is int:
+                return
             tag = "evenrow" if i % 2 == 0 else "oddrow"
             self.tree.insert("", "end", values=list(row), tags=(tag,))
+
+    def toggle_column(self, column):
+        checkbox = CHECK_ON if self.tree.heading(column)["text"].endswith(CHECK_OFF) else CHECK_OFF
+        self.tree.heading(column, text=column + checkbox)
 
     def run(self):
         self.root.mainloop()
