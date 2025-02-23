@@ -2,6 +2,7 @@ import os
 
 from absl import app, logging
 from tkinter import filedialog, ttk
+import matplotlib.pyplot as plt
 import pandas as pd
 import tkinter as tk
 
@@ -24,6 +25,11 @@ class TabioApp(object):
         self.open_button.pack(side="left")
         self.transpose_button = ttk.Button(self.toolbox, text="Transpose", command=self.transpose)
         self.transpose_button.pack(side="left")
+        self.plot_button = tk.StringVar(self.root)
+        self.plot_button.set("Plot")
+        plot_types = ['Line', 'Scatter', 'Histogram']
+        self.dropdown = tk.OptionMenu(self.toolbox, self.plot_button, *plot_types, command=self.on_plot)
+        self.dropdown.pack(side="left")
 
         # Treeview for displaying table
         self.tree_frame = tk.Frame(self.root)
@@ -69,7 +75,7 @@ class TabioApp(object):
             self.tree.column(col, anchor="center", width=100, stretch=False)
 
         for i, row in self.df.iterrows():
-            if type(i) is int:
+            if type(i) is not int:
                 return
             tag = "evenrow" if i % 2 == 0 else "oddrow"
             self.tree.insert("", "end", values=list(row), tags=(tag,))
@@ -77,6 +83,26 @@ class TabioApp(object):
     def toggle_column(self, column):
         checkbox = CHECK_ON if self.tree.heading(column)["text"].endswith(CHECK_OFF) else CHECK_OFF
         self.tree.heading(column, text=column + checkbox)
+
+    def on_plot(self, plot_type):
+        # Plot the selected columns based on the plot type with matplotlib.
+        selected = [col for col in self.df.columns if self.tree.heading(col)["text"].endswith(CHECK_ON)]
+        if not selected:
+            logging.error("No columns selected for plotting.")
+            return
+        logging.info(F"Plotting {selected} as {plot_type}.")
+        selected_df = self.df[selected]
+        if plot_type == 'Line':
+            selected_df.plot.line()
+        elif plot_type == 'Scatter':
+            fig, ax = plt.subplots()
+            selected_df.plot.scatter(x=selected[0], y=selected[1], ax=ax)
+            plt.show()
+        elif plot_type == 'Histogram':
+            selected_df.plot.hist()
+        else:
+            logging.error(F"Unsupported plot type: {plot_type}.")
+        self.plot_button.set("Plot")
 
     def run(self):
         self.root.mainloop()
