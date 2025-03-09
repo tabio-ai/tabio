@@ -2,13 +2,14 @@ import os
 
 from absl import app, logging
 from tkinter import filedialog, ttk
-import matplotlib.pyplot as plt
 import pandas as pd
 import tkinter as tk
 
+from tabio.df_plotter import DFPlotter
 
-CHECK_ON = '☑'
-CHECK_OFF = '☐'
+
+CHECK_ON = "☑"
+CHECK_OFF = "☐"
 
 
 class TabioApp(object):
@@ -19,17 +20,21 @@ class TabioApp(object):
         self.root.title("Tabio")
         self.root.geometry("1200x900")
 
-        self.toolbox = tk.Frame(self.root)
-        self.toolbox.pack(fill="x")
-        self.open_button = ttk.Button(self.toolbox, text="Open", command=self.load_file)
-        self.open_button.pack(side="left")
-        self.transpose_button = ttk.Button(self.toolbox, text="Transpose", command=self.transpose)
-        self.transpose_button.pack(side="left")
+        # Toolbox row 1.
+        self.toolbox1 = tk.Frame(self.root)
+        self.toolbox1.pack(fill="x")
+        ttk.Button(self.toolbox1, text="Open", command=self.load_file).pack(side="left")
+        ttk.Button(self.toolbox1, text="Transpose", command=self.transpose).pack(side="left")
+
+        # Toolbox row 2 for plotting.
+        self.toolbox2 = tk.Frame(self.root)
+        self.toolbox2.pack(fill="x")
+
+        tk.Label(self.toolbox2, text="Plot As").pack(side="left")
         self.plot_button = tk.StringVar(self.root)
-        self.plot_button.set("Plot")
-        plot_types = ['Line', 'Scatter', 'Histogram']
-        self.dropdown = tk.OptionMenu(self.toolbox, self.plot_button, *plot_types, command=self.on_plot)
-        self.dropdown.pack(side="left")
+        self.plot_button.set("Histogram")
+        plot_types = ["Histogram", "Scatter", "Line"]
+        tk.OptionMenu(self.toolbox2, self.plot_button, *plot_types, command=self.on_plot).pack(side="left")
 
         # Treeview for displaying table
         self.tree_frame = tk.Frame(self.root)
@@ -49,7 +54,7 @@ class TabioApp(object):
         self.tree_frame.grid_columnconfigure(0, weight=1)
 
         # TODO(x): Remove before release.
-        self.load_file('/home/data/work/test.csv' if os.name == 'posix' else 'C:/test.csv')
+        self.load_file("/home/data/work/test.csv" if os.name == "posix" else "C:/test.csv")
 
     def load_file(self, file_path=None):
         file_path = file_path or filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
@@ -71,7 +76,7 @@ class TabioApp(object):
         self.tree.delete(*self.tree.get_children())
         self.tree["columns"] = list(self.df.columns)
         for col in self.df.columns:
-            self.tree.heading(col, text=col + CHECK_OFF, command=lambda _col=col: self.toggle_column(_col))
+            self.tree.heading(col, text=F"{col} {CHECK_OFF}", command=lambda _col=col: self.toggle_column(_col))
             self.tree.column(col, anchor="center", width=100, stretch=False)
 
         for i, row in self.df.iterrows():
@@ -81,8 +86,9 @@ class TabioApp(object):
             self.tree.insert("", "end", values=list(row), tags=(tag,))
 
     def toggle_column(self, column):
-        checkbox = CHECK_ON if self.tree.heading(column)["text"].endswith(CHECK_OFF) else CHECK_OFF
-        self.tree.heading(column, text=column + checkbox)
+        text = self.tree.heading(column)["text"]
+        mark = CHECK_ON if text.endswith(CHECK_OFF) else CHECK_OFF
+        self.tree.heading(column, text=F"{text[:-1]}{mark}")
 
     def on_plot(self, plot_type):
         # Plot the selected columns based on the plot type with matplotlib.
@@ -91,18 +97,15 @@ class TabioApp(object):
             logging.error("No columns selected for plotting.")
             return
         logging.info(F"Plotting {selected} as {plot_type}.")
-        selected_df = self.df[selected]
-        if plot_type == 'Line':
-            selected_df.plot.line()
-        elif plot_type == 'Scatter':
-            fig, ax = plt.subplots()
-            selected_df.plot.scatter(x=selected[0], y=selected[1], ax=ax)
-            plt.show()
-        elif plot_type == 'Histogram':
-            selected_df.plot.hist()
+        df_plotter = DFPlotter(self.df[selected])
+        if plot_type == "Line":
+            df_plotter.line()
+        elif plot_type == "Scatter":
+            df_plotter.scatter()
+        elif plot_type == "Histogram":
+            df_plotter.hist()
         else:
             logging.error(F"Unsupported plot type: {plot_type}.")
-        self.plot_button.set("Plot")
 
     def run(self):
         self.root.mainloop()
